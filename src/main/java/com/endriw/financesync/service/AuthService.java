@@ -4,6 +4,8 @@ import com.endriw.financesync.dto.AuthRequest;
 import com.endriw.financesync.dto.AuthResponse;
 import com.endriw.financesync.dto.RegisterRequest;
 import com.endriw.financesync.model.User;
+import com.endriw.financesync.model.enums.UserRole;
+import com.endriw.financesync.model.enums.UserStatus;
 import com.endriw.financesync.repository.UserRepository;
 import com.endriw.financesync.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,6 +39,8 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
+        user.setRole(UserRole.USER);
+        user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
 
         String token = jwtService.generateToken(user.getEmail());

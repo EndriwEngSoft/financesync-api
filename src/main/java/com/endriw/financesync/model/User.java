@@ -2,6 +2,7 @@ package com.endriw.financesync.model;
 
 import com.endriw.financesync.model.enums.UserRole;
 import com.endriw.financesync.model.enums.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,6 +27,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
