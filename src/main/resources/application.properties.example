@@ -1,0 +1,12 @@
+spring.application.name=financesync
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/financesync_db
+spring.datasource.username=seu_usuario
+spring.datasource.password=sua_senha
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+jwt.secret=sua-chave-secreta-aqui
+jwt.expiration=86400000
