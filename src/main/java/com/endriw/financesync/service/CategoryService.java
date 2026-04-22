@@ -39,7 +39,7 @@ public class CategoryService {
     public Category findById(Long id, String email) {
         User user = getAuthenticatedUser(email);
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category does not belong to this user: " + id));
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
 
         if (!category.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Category does not belong to this user: " + id);
@@ -64,5 +64,4 @@ public class CategoryService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found: " + email));
     }
-
 }

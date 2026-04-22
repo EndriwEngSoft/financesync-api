@@ -25,6 +25,9 @@ public class CategoryServiceTest {
     public static final String DESCRIPTION = "Gastos com alimentação";
     public static final String EMAIL = "test@email.com";
 
+    public static final String UPDATED_NAME = "Transporte";
+    public static final String UPDATED_DESCRIPTION = "Gastos com transporte";
+
     @Mock
     CategoryRepository categoryRepository;
     @Mock
@@ -137,6 +140,18 @@ public class CategoryServiceTest {
     }
 
     @Test
+    void findById_whenCategoryNotFound_shouldThrowException() {
+        User user = new User();
+        user.setId(1L);
+
+        when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(any())).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> categoryService.findById(1L, EMAIL));
+        assertEquals("Category not found with id: 1", ex.getMessage());
+    }
+
+    @Test
     void findById_whenCategoryBelongsToAnotherUser_shouldThrowException() {
         User user = new User();
         user.setId(1L);
@@ -158,8 +173,8 @@ public class CategoryServiceTest {
     void update_whenUserExists_shouldUpdateCategory() {
         CategoryRequest  request = new CategoryRequest();
 
-        request.setName(NAME);
-        request.setDescription(DESCRIPTION);
+        request.setName(UPDATED_NAME);
+        request.setDescription(UPDATED_DESCRIPTION);
 
         User user = new User();
         user.setId(1L);
@@ -176,10 +191,11 @@ public class CategoryServiceTest {
         when(categoryRepository.save(any())).thenReturn(category);
 
         Category response = categoryService.update(1L, request, EMAIL);
+
         assertNotNull(response);
         verify(categoryRepository, times(1)).findById(any());
-        assertEquals(NAME, response.getName());
-        assertEquals(DESCRIPTION, response.getDescription());
+        assertEquals(UPDATED_NAME, response.getName());
+        assertEquals(UPDATED_DESCRIPTION, response.getDescription());
         assertEquals(user, response.getUser());
         assertEquals(LocalDateTime.now().getDayOfYear(), response.getCreatedAt().getDayOfYear());
     }
