@@ -43,7 +43,7 @@ public class AccountService {
     public Account findById(Long id, String email) {
         User user = getAuthenticatedUser(email);
         Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Account does not belong to this user: " + id));
+                .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
 
         if (!account.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Account does not belong to this user: " + id);

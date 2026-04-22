@@ -156,6 +156,18 @@ public class AccountServiceTest {
     }
 
     @Test
+    void findById_whenAccountNotFound_shouldThrowException() {
+        User user =  new User();
+        user.setId(1L);
+
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(accountRepository.findById(any())).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> accountService.findById(1L, EMAIL));
+        assertEquals("Account not found with id: 1", ex.getMessage());
+    }
+
+    @Test
     void findById_whenAccountBelongsToAnotherUser_shouldThrowException() {
         User user = new User();
         user.setId(1L);
