@@ -74,7 +74,7 @@ public class AccountServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> accountService.create(request, EMAIL));
-        assertEquals("User not found: test@email.com", ex.getMessage());
+        assertEquals("User not found: " + EMAIL, ex.getMessage());
     }
 
     @Test
