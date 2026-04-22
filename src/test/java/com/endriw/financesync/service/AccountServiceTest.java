@@ -28,6 +28,9 @@ public class AccountServiceTest {
     public static final String BANK_NAME = "Nubank";
     public static final String EMAIL = "test@email.com";
 
+    public static final String UPDATED_ACCOUNT_NUMBER = "5678";
+    public static final String UPDATED_BANK = "Inter";
+
     @Mock
     AccountRepository accountRepository;
     @Mock
@@ -189,9 +192,9 @@ public class AccountServiceTest {
     void update_whenUserExists_shouldUpdateAccount() {
         AccountRequest request = new AccountRequest();
 
-        request.setAccountNumber(ACCOUNT_NUMBER);
+        request.setAccountNumber(UPDATED_ACCOUNT_NUMBER);
         request.setAgency(AGENCY);
-        request.setBankName(BANK_NAME);
+        request.setBankName(UPDATED_BANK);
         request.setType(AccountType.CHECKING);
 
         User user = new User();
@@ -215,9 +218,10 @@ public class AccountServiceTest {
 
         assertNotNull(response);
         verify(accountRepository, times(1)).findById(any());
-        assertEquals(ACCOUNT_NUMBER, response.getAccountNumber());
+        verify(accountRepository, times(1)).save(any());
+        assertEquals(UPDATED_ACCOUNT_NUMBER, response.getAccountNumber());
         assertEquals(AGENCY, response.getAgency());
-        assertEquals(BANK_NAME, response.getBankName());
+        assertEquals(UPDATED_BANK, response.getBankName());
         assertEquals(AccountType.CHECKING, response.getType());
         assertEquals(user, response.getUser());
         assertEquals(AccountStatus.ACTIVE, response.getStatus());

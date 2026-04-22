@@ -36,6 +36,10 @@ public class TransactionServiceTest {
     public static final PaymentMethod PAYMENT_METHOD = PaymentMethod.CREDIT_CARD;
     public static final BigDecimal FEE = new BigDecimal("0.00");
     public static final String DESCRIPTION = "Gasto com alimentação";
+
+    public static final BigDecimal UPDATE_AMOUNT = new BigDecimal("250.00");
+    public static final String UPDATE_DESCRIPTION = "Gasto com transporte";
+
     @Mock
     TransactionRepository transactionRepository;
     @Mock
@@ -261,6 +265,18 @@ public class TransactionServiceTest {
     }
 
     @Test
+    void findById_whenTransactionNotFound_shouldThrowException() {
+        User user = new User();
+        user.setId(1L);
+
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(transactionRepository.findById(any())).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> transactionService.findById(1L, EMAIL));
+        assertEquals("Transaction not found", ex.getMessage());
+    }
+
+    @Test
     void findById_whenTransactionBelongsToAnotherUser_shouldThrowException() {
         User user = new User();
         user.setId(1L);
@@ -291,11 +307,11 @@ public class TransactionServiceTest {
 
         TransactionRequest request = new TransactionRequest();
 
-        request.setAmount(AMOUNT);
+        request.setAmount(UPDATE_AMOUNT);
         request.setType(TYPE);
         request.setPaymentMethod(PAYMENT_METHOD);
         request.setFee(FEE);
-        request.setDescription(DESCRIPTION);
+        request.setDescription(UPDATE_DESCRIPTION);
 
         Transaction transaction = new Transaction();
 
@@ -314,11 +330,11 @@ public class TransactionServiceTest {
         Transaction response = transactionService.update(1L, request, EMAIL);
 
         assertNotNull(response);
-        assertEquals(AMOUNT, response.getAmount());
+        assertEquals(UPDATE_AMOUNT, response.getAmount());
         assertEquals(TYPE, response.getType());
         assertEquals(PAYMENT_METHOD, response.getPaymentMethod());
         assertEquals(FEE, response.getFee());
-        assertEquals(DESCRIPTION, response.getDescription());
+        assertEquals(UPDATE_DESCRIPTION, response.getDescription());
         assertEquals(LocalDateTime.now().getDayOfYear(), response.getTransactionDate().getDayOfYear());
         verify(userRepository, times(1)).findByEmail(anyString());
     }
