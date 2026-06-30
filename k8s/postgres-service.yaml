@@ -1,0 +1,31 @@
+# ============================================
+# KUBERNETES SERVICE: PostgreSQL
+# ============================================
+# Service expõe Pods para network
+# Cria um "DNS name" que outros Pods podem usar
+#
+# type: ClusterIP = apenas acesso interno
+# Nome: postgres = acessível em postgres:5432
+# ============================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: financesync
+  labels:
+    app: postgres
+spec:
+  # tipo de serviço
+  type: ClusterIP
+  
+  # Selector: conecta service com Pods
+  selector:
+    app: postgres
+  
+  # Porta
+  ports:
+  - protocol: TCP
+    port: 5432            # porta interna do cluster
+    targetPort: 5432      # porta do container
+    name: db

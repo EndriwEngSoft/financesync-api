@@ -1,0 +1,15 @@
+# ============================================
+# KUBERNETES NAMESPACE
+# ============================================
+# Namespace = isolamento lógico dentro do cluster
+# Todos recursos (Deployments, Services, ConfigMaps, Secrets)
+# dentro deste namespace ficarão isolados
+# ============================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: financesync
+  labels:
+    name: financesync
+    environment: development

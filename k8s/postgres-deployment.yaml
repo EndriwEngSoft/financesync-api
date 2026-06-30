@@ -1,0 +1,90 @@
+# ============================================
+# KUBERNETES DEPLOYMENT: PostgreSQL
+# ============================================
+# Deployment gerencia Pods (containers)
+# Garante que o Pod está sempre rodando
+# Se cair, reinicia automaticamente
+# ============================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: financesync
+  labels:
+    app: postgres
+spec:
+  # Apenas 1 instância do banco (não é escalável)
+  replicas: 1
+  
+  # Selector conecta Deployment com Pods
+  selector:
+    matchLabels:
+      app: postgres
+
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        
+        # Porta do container (interna)
+        ports:
+        - containerPort: 5432
+          name: db
+        
+        # Injeta variáveis de ambiente do ConfigMap e Secret
+        envFrom:
+        - configMapRef:
+            name: financesync-config
+        - secretRef:
+            name: financesync-secret
+        
+        # Storage: onde dados do banco são guardados
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+          subPath: postgres
+        
+        # Limita recursos CPU/Memory
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # Health check: verifica se banco está saudável
+        # Se falhar 3 vezes, reinicia o container
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Readiness check: verifica se banco está pronto
+        # Se falhar, remove do serviço até ficar pronto
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U postgres
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+
+      # Volume: armazenamento temporário
+      # Em produção: usar PersistentVolume + PersistentVolumeClaim
+      volumes:
+      - name: postgres-storage
+        emptyDir: {}

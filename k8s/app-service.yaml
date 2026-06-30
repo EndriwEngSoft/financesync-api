@@ -1,0 +1,34 @@
+# ============================================
+# KUBERNETES SERVICE: Spring Boot App
+# ============================================
+# Service expõe Pods para rede
+# type: LoadBalancer = expõe externamente para usuários
+#
+# Mapeia:
+# - Porta 80 (usuários acessam)
+# - Para porta 8080 (container)
+# ============================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: financesync-app
+  namespace: financesync
+  labels:
+    app: financesync-app
+spec:
+  # type: LoadBalancer = expõe para FORA do cluster
+  # Usuários podem acessar via IP externo
+  type: LoadBalancer
+  
+  # Selector: conecta service com Pods
+  selector:
+    app: financesync-app
+  
+  # Porta
+  ports:
+  - protocol: TCP
+    port: 80              # porta externa (usuários acessam)
+    targetPort: 8080      # porta do container
+    nodePort: 30000       # porta do node (Docker Desktop K8s)
+    name: http

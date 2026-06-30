@@ -1,0 +1,84 @@
+# ============================================
+# KUBERNETES DEPLOYMENT: Spring Boot App
+# ============================================
+# Deployment gerencia Pods da aplicação
+# replicas: 3 = 3 instâncias rodando simultaneamente
+# RollingUpdate = atualiza sem downtime
+# ============================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: financesync-app
+  namespace: financesync
+  labels:
+    app: financesync-app
+spec:
+  # 3 instâncias da app para alta disponibilidade
+  replicas: 3
+  
+  # Selector conecta Deployment com Pods
+  selector:
+    matchLabels:
+      app: financesync-app
+  
+  # Strategy: como fazer rolling updates
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # até 1 Pod novo simultaneamente
+      maxUnavailable: 0    # 0 Pods indisponíveis durante update
+
+  template:
+    metadata:
+      labels:
+        app: financesync-app
+    spec:
+      containers:
+      - name: app
+        # Sua imagem Docker que você fez com: docker build -t financesync:latest .
+        image: financesync:latest
+        imagePullPolicy: IfNotPresent
+        
+        # Porta do container (interna)
+        ports:
+        - containerPort: 8080
+          name: http
+        
+        # Injeta variáveis de ambiente do ConfigMap e Secret
+        envFrom:
+        - configMapRef:
+            name: financesync-config
+        - secretRef:
+            name: financesync-secret
+        
+        # Limita recursos CPU/Memory por Pod
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # Liveness Probe: reinicia se não responder
+        # Verifica: GET /api/swagger-ui.html → 200 OK?
+        livenessProbe:
+          httpGet:
+            path: /api/swagger-ui.html
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Readiness Probe: remove do load balancer se não estiver pronto
+        # Verifica: GET /api/swagger-ui.html → 200 OK?
+        readinessProbe:
+          httpGet:
+            path: /api/swagger-ui.html
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
