@@ -1,0 +1,36 @@
+# ============================================
+# .DOCKERIGNORE: O que NÃO copiar para imagem
+# ============================================
+# Reduz tamanho da imagem e acelera build
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+
+# Build
+target
+.mvn
+
+# Environment
+.env
+.env.example
+
+# Docs
+README.md
+HELP.md
+*.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+.mvn/wrapper/maven-wrapper.jar

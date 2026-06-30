@@ -1,0 +1,78 @@
+# ============================================
+# DOCKER COMPOSE: Orquestração Local
+# ============================================
+# Estrutura:
+# - version: sintaxe do compose (3.9 é estável)
+# - services: containers que rodam juntos
+# - networks: como containers conversam
+# - volumes: persistência de dados
+# ============================================
+
+version: '3.9'
+
+services:
+  # ========== POSTGRESQL DATABASE ==========
+  postgres:
+    image: postgres:16-alpine
+    container_name: financesync-db
+    environment:
+      # Essas variáveis setup o Postgres
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # localhost:5432 -> container:5432
+      - "${DB_PORT}:5432"
+    volumes:
+      # db_data local -> /var/lib/postgresql/data dentro do container
+      # Persiste dados mesmo se container parar
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - financesync-network
+    healthcheck:
+      # Verifica se DB está saudável
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ========== SPRING BOOT APP ==========
+  app:
+    # Constrói a imagem do Dockerfile local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SKIP_TESTS: "true"
+    container_name: financesync-app
+    # Variáveis de ambiente vêm do .env
+    env_file:
+      - .env
+    environment:
+      # Spring precisa saber aonde está o BD
+      # Note: "db" é o nome do serviço acima
+      # Docker automaticamente resolve "db" -> IP interno
+      DB_HOST: postgres
+    ports:
+      # localhost:8080 -> container:8080
+      - "8080:8080"
+    depends_on:
+      postgres:
+        # Espera até que postgres esteja saudável
+        condition: service_healthy
+    networks:
+      - financesync-network
+    restart: unless-stopped
+
+# ========== VOLUMES ==========
+# Define volumes nomeados (persistência)
+volumes:
+  db_data:
+    driver: local
+
+# ========== NETWORKS ==========
+# Define rede customizada (containers conseguem se comunicar pelo nome)
+networks:
+  financesync-network:
+    driver: bridge
