@@ -1,0 +1,36 @@
+# ============================================
+# KUBERNETES PERSISTENT VOLUME CLAIM (PVC)
+# ============================================
+# PVC é uma requisição de armazenamento persistente
+# Kubernetes automaticamente aloca um PV (Persistent Volume)
+#
+# Uso:
+# - Desenvolvimento: StorageClass padrão do Docker Desktop K8s (hostPath)
+# - Produção: NFS, EBS, Azure Disk, GCP Persistent Disk, etc.
+# ============================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: financesync
+  labels:
+    app: postgres
+spec:
+  # Define qual StorageClass usar
+  # Docker Desktop K8s usa 'hostpath' como default
+  # Deixar vazio usa o default do cluster
+  storageClassName: ""
+  
+  # RWO = ReadWriteOnce (1 node, 1 writer)
+  # RWX = ReadWriteMany (múltiplos nodes)
+  # ROX = ReadOnlyMany (múltiplos nodes, read-only)
+  accessModes:
+    - ReadWriteOnce
+  
+  # Tamanho do volume
+  # Para desenvolvimento: 10Gi é suficiente
+  # Para produção: ajuste conforme necessidade
+  resources:
+    requests:
+      storage: 10Gi

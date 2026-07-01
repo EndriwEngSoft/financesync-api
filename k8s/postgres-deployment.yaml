@@ -88,8 +88,10 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 3
 
-      # Volume: armazenamento temporário
-      # Em produção: usar PersistentVolume + PersistentVolumeClaim
+      # Volume: armazenamento persistente
+      # Usa PersistentVolumeClaim para manter dados mesmo com Pod reiniciando
+      # Configurado em postgres-pvc.yaml
       volumes:
       - name: postgres-storage
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: postgres-pvc
