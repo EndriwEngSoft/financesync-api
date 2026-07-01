@@ -1,151 +1,121 @@
  # Kubernetes Manifests - FinanceSync
 
-## 📋 Estrutura de Arquivos
+ ## File Structure
 
-```
-k8s/
-├── namespace.yaml                 # Isolamento lógico do cluster
-├── configmap.yaml                 # Variáveis públicas
-├── secret.yaml                    # Variáveis sensíveis (senhas, tokens)
-├── postgres-deployment.yaml       # Deployment do PostgreSQL
-├── postgres-service.yaml          # Service que expõe PostgreSQL
-├── app-deployment.yaml            # Deployment do Spring Boot (3 replicas)
-├── app-service.yaml               # Service LoadBalancer da app
-├── kustomization.yaml             # Agrupa todos recursos
-└── README.md                       # Este arquivo
-```
+ ```
+ k8s/
+ ├── namespace.yaml                 # Logical isolation
+ ├── configmap.yaml                 # Non-sensitive variables
+ ├── secret.yaml                    # Sensitive data (passwords, tokens)
+ ├── postgres-deployment.yaml       # PostgreSQL Deployment
+ ├── postgres-service.yaml          # PostgreSQL Service
+ ├── app-deployment.yaml            # Spring Boot Deployment (3 replicas)
+ ├── app-service.yaml               # LoadBalancer Service
+ ├── kustomization.yaml             # Resource management
+ └── README.md                       # Documentation
+ ```
 
-## 🎯 Componentes Kubernetes
+ ## Kubernetes Components
 
-### 1. **Namespace**
-- Isolamento lógico dentro do cluster
-- Nome: `financesync`
-- Todos recursos aqui estão isolados
+ ### Namespace
+ - Logical isolation within cluster
+ - Name: `financesync`
+ - All resources are isolated
 
-### 2. **ConfigMap**
-- Variáveis de ambiente NÃO-sensíveis
-- Exemplos: portas, hosts, nomes de database
-- Alterável sem redesployment
+ ### ConfigMap
+ - Non-sensitive environment variables
+ - Examples: ports, hosts, database names
+ - Mutable without redeployment
 
-### 3. **Secret**
-- Variáveis SENSÍVEIS (senhas, tokens JWT)
-- Armazenado criptografado em produção
-- Em desenvolvimento: arquivo YAML (NÃO VERSIONADO em produção)
+ ### Secret
+ - Sensitive data (passwords, JWT tokens)
+ - Encrypted at rest in production
+ - Not versioned in production
 
-### 4. **PostgreSQL Deployment**
-- 1 replica (banco é stateful)
-- Image: `postgres:16-alpine`
-- Volume: emptyDir (temporário - em produção usar PersistentVolume)
-- Health checks: liveness + readiness
+ ### PostgreSQL Deployment
+ - 1 replica (stateful)
+ - Image: `postgres:16-alpine`
+ - Volume: emptyDir (temporary - use PersistentVolume in production)
+ - Health checks: liveness + readiness
 
-### 5. **PostgreSQL Service**
-- Type: ClusterIP (apenas acesso interno)
-- Name: `postgres` (resolvível dentro do cluster)
-- Port: 5432
+ ### PostgreSQL Service
+ - Type: ClusterIP (internal only)
+ - Name: `postgres` (resolvable within cluster)
+ - Port: 5432
 
-### 6. **Spring Boot Deployment**
-- 3 replicas (alta disponibilidade)
-- Image: `financesync:latest` (sua imagem do docker build)
-- Rolling updates (sem downtime)
-- Health checks: liveness + readiness
-- Resource limits: 256Mi RAM, 250m CPU (request), 512Mi RAM, 500m CPU (limit)
+ ### Spring Boot Deployment
+ - 3 replicas (high availability)
+ - Image: `financesync:latest`
+ - Rolling updates (zero downtime)
+ - Health checks: liveness + readiness
+ - Resource limits: 256Mi RAM, 250m CPU (request), 512Mi RAM, 500m CPU (limit)
 
-### 7. **Spring Boot Service**
-- Type: LoadBalancer (expõe externamente)
-- Port 80 (externa) → 8080 (container)
-- NodePort: 30000 (para Docker Desktop K8s)
+ ### Spring Boot Service
+ - Type: LoadBalancer (external)
+ - Port 80 (external) → 8080 (container)
+ - NodePort: 30000 (Docker Desktop K8s)
 
-### 8. **Kustomization**
-- Agrupa todos os arquivos YAML
-- Permite aplicar com: `kubectl apply -k k8s/`
+ ### Kustomization
+ - Manages all YAML files
+ - Deploy with: `kubectl apply -k k8s/`
 
-## 🚀 Como Usar
+ ## Usage
 
-### Deploy no Kubernetes Desktop:
+ ### Deploy on Kubernetes:
 
-```bash
-# 1. Ativar K8s no Docker Desktop (Settings → Kubernetes → Enable)
+ ```bash
+ # 1. Enable K8s on Docker Desktop (Settings → Kubernetes → Enable)
 
-# 2. Aplicar manifests
-kubectl apply -k k8s/
+ # 2. Apply manifests
+ kubectl apply -k k8s/
 
-# 3. Verificar status
-kubectl get pods -n financesync
-kubectl get svc -n financesync
+ # 3. Check status
+ kubectl get pods -n financesync
+ kubectl get svc -n financesync
 
-# 4. Ver logs
-kubectl logs -n financesync -l app=financesync-app
+ # 4. View logs
+ kubectl logs -n financesync -l app=financesync-app
 
-# 5. Acessar app
-# Localhost: http://localhost:30000/api/swagger-ui.html
-```
+ # 5. Access application
+ # URL: http://localhost:30000/api/swagger-ui.html
+ ```
 
-## 📊 Diferenças: docker-compose vs Kubernetes
+ ## Comparison: docker-compose vs Kubernetes
 
-| Feature | docker-compose | Kubernetes |
-|---------|---------|-----------|
-| Escala | 1 máquina | Múltiplos nodes |
-| Replicas | Manual | Automático |
-| Health checks | ✅ Básico | ✅ Avançado |
-| Rolling updates | ❌ Não | ✅ Sim |
-| Load balancing | ⚠️ Básico | ✅ Nativo |
-| Storage | Volumes | PersistentVolumes |
-| Secrets | .env | K8s Secrets (encrypted) |
-| Monitoring | ❌ | ✅ Métricas nativas |
+ | Feature | docker-compose | Kubernetes |
+ |---------|---------|-----------|
+ | Scale | Single machine | Multiple nodes |
+ | Replicas | Manual | Automatic |
+ | Health checks | Basic | Advanced |
+ | Rolling updates | No | Yes |
+ | Load balancing | Basic | Native |
+ | Storage | Volumes | PersistentVolumes |
+ | Secrets | .env file | K8s Secrets (encrypted) |
+ | Monitoring | No | Native metrics |
 
-## ⚠️ Notas Importantes
+ ## Development vs Production
 
-### Desenvolvimento vs Produção:
+ ### Development:
+ - Secrets stored in YAML (visible)
+ - Storage: emptyDir (data lost on restart)
+ - 3 app replicas
 
-**Desenvolvimento (aqui):**
-- Secret armazenado em YAML (visível)
-- Storage: emptyDir (dados perdidos ao reiniciar)
-- 3 replicas da app (pode ser 1)
+ ### Production:
+ - Secrets in AWS Secrets Manager / Azure Key Vault / HashiCorp Vault
+ - Storage: PersistentVolume (NFS/EBS/Azure Disk)
+ - Higher resource limits
+ - Network policies
+ - RBAC (Role-Based Access Control)
 
-**Produção REAL:**
-- Secret em AWS Secrets Manager / Azure Key Vault / Vault
-- Storage: PersistentVolume em NFS/EBS/Azure Disk
-- Resource limits mais altos
-- Network policies
-- RBAC (Role-Based Access Control)
+ ## Deployment Lifecycle
 
-## 🔄 Lifecycle de Deploy
-
-```
-1. kubectl apply -k k8s/
-2. Namespace é criado
-3. ConfigMap e Secret são criados
-4. PostgreSQL Deployment inicia (1 Pod)
-5. PostgreSQL Service é criado
-6. Spring Boot Deployment inicia (3 Pods, gradualmente)
-7. Spring Boot Service LoadBalancer é criado
-8. Usuários acessam via LoadBalancer (porta 80)
-```
-
-## 📝 Probes Explicadas
-
-### Liveness Probe
-```yaml
-livenessProbe:
-  httpGet: GET /api/swagger-ui.html
-  initialDelaySeconds: 60  # espera 60s antes de começar
-  periodSeconds: 10        # verifica a cada 10s
-  failureThreshold: 3      # falha 3 vezes = reinicia
-```
-
-### Readiness Probe
-```yaml
-readinessProbe:
-  httpGet: GET /api/swagger-ui.html
-  initialDelaySeconds: 30  # espera 30s
-  periodSeconds: 5         # verifica a cada 5s
-  failureThreshold: 3      # falha 3 vezes = remove do load balancer
-```
-
-## 🎯 Próximos Passos
-
-1. ✅ Docker + docker-compose (DONE)
-2. ⏳ Kubernetes local (este passo)
-3. → Helm charts (automação de K8s)
-4. → CI/CD com GitHub Actions
-5. → Deploy em cluster real (EKS/AKS/GKE)
+ ```
+ 1. kubectl apply -k k8s/
+ 2. Namespace created
+ 3. ConfigMap and Secret created
+ 4. PostgreSQL Deployment starts (1 Pod)
+ 5. PostgreSQL Service created
+ 6. Spring Boot Deployment starts (3 Pods, rolling)
+ 7. Spring Boot Service LoadBalancer created
+ 8. Application ready at LoadBalancer endpoint
+ ```
