@@ -30,7 +30,7 @@
  ### Secret
  - Sensitive data (passwords, JWT tokens)
  - Encrypted at rest in production
- - Not versioned in production
+ - Not versioned in production (see Secret Management below)
 
  ### PostgreSQL Deployment
  - 1 replica (stateful)
@@ -58,6 +58,57 @@
  ### Kustomization
  - Manages all YAML files
  - Deploy with: `kubectl apply -k k8s/`
+
+ ## Secret Management
+
+ **⚠️ IMPORTANT: `k8s/secret.yaml` is NOT versioned in Git (it's in `.gitignore`)**
+
+ ### Setup Local Secret (Development):
+
+ 1. Copy the template:
+ ```bash
+ cp k8s/secret.yaml.example k8s/secret.yaml
+ ```
+
+ 2. Edit with your values:
+ ```bash
+ # Edit the file:
+ vim k8s/secret.yaml
+ # or
+ code k8s/secret.yaml
+ ```
+
+ 3. Set strong passwords:
+ ```yaml
+ DB_PASSWORD: "your_strong_db_password"        # Change this!
+ POSTGRES_PASSWORD: "your_strong_postgres_pw"  # Change this!
+ JWT_SECRET: "your_strong_jwt_secret_key_64_chars_minimum"  # Change this!
+ ```
+
+ ### Generate Secure JWT Secret:
+
+ **Linux/macOS:**
+ ```bash
+ openssl rand -base64 64 | tr -d '\n'
+ ```
+
+ **PowerShell (Windows):**
+ ```powershell
+ -join ((0..63) | ForEach-Object { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[(Get-Random -Maximum 62)] })
+ ```
+
+ ### Production Secret Management:
+
+ - **AWS**: Use AWS Secrets Manager
+ - **Azure**: Use Azure Key Vault
+ - **GCP**: Use Secret Manager
+ - **On-Premises**: Use HashiCorp Vault or similar
+
+ Reference in Kubernetes:
+ ```yaml
+ secretRef:
+   name: financesync-secret  # External secret synced by controller
+ ```
 
  ## Usage
 
