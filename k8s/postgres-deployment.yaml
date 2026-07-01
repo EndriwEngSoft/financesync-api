@@ -36,6 +36,11 @@ spec:
         - containerPort: 5432
           name: db
         
+        # Variáveis de ambiente explícitas
+        env:
+        - name: POSTGRES_INITDB_ARGS
+          value: "-c max_connections=200"
+        
         # Injeta variáveis de ambiente do ConfigMap e Secret
         envFrom:
         - configMapRef:
