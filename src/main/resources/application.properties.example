@@ -18,3 +18,9 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 # ===== JWT =====
 jwt.secret=${JWT_SECRET:sua-chave-secreta-aqui}
 jwt.expiration=${JWT_EXPIRATION:86400000}
+
+# ===== ACTUATOR / OBSERVABILITY =====
+# Expõe endpoints de health check para Kubernetes probes
+# /actuator/health = verifica status da aplicação
+management.endpoints.web.exposure.include=health
+management.endpoint.health.show-details=when-authorized

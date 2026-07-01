@@ -62,10 +62,11 @@ spec:
             cpu: "500m"
         
         # Liveness Probe: reinicia se não responder
-        # Verifica: GET /api/swagger-ui.html → 200 OK?
+        # Verifica: GET /api/actuator/health → 200 OK?
+        # Endpoint de health do Spring Boot Actuator (mais confiável que Swagger UI)
         livenessProbe:
           httpGet:
-            path: /api/swagger-ui.html
+            path: /api/actuator/health
             port: 8080
           initialDelaySeconds: 60
           periodSeconds: 10
@@ -73,10 +74,11 @@ spec:
           failureThreshold: 3
         
         # Readiness Probe: remove do load balancer se não estiver pronto
-        # Verifica: GET /api/swagger-ui.html → 200 OK?
+        # Verifica: GET /api/actuator/health → 200 OK?
+        # Endpoint de health do Spring Boot Actuator (mais confiável que Swagger UI)
         readinessProbe:
           httpGet:
-            path: /api/swagger-ui.html
+            path: /api/actuator/health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 5
