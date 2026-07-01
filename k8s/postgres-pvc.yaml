@@ -17,10 +17,11 @@ metadata:
   labels:
     app: postgres
 spec:
-  # Define qual StorageClass usar
-  # Docker Desktop K8s usa 'hostpath' como default
-  # Deixar vazio usa o default do cluster
-  storageClassName: ""
+  # storageClassName ausente = usa a StorageClass padrão do cluster
+  # storageClassName: "" (string vazia) = desativa provisionamento dinâmico (ERRADO)
+  # storageClassName: "gp2" = especifica uma StorageClass nomeada (produção)
+  # 
+  # No Docker Desktop K8s: deixar ausente provoca alocação automática com "hostpath"
   
   # RWO = ReadWriteOnce (1 node, 1 writer)
   # RWX = ReadWriteMany (múltiplos nodes)
