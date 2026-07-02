@@ -18,21 +18,21 @@ metadata:
     app: financesync
 data:
   # ===== DATABASE =====
-  DB_HOST: postgres
-  DB_PORT: 5432
-  DB_NAME: financesync_db
-  DB_USER: postgres
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "financesync_db"
+  DB_USER: "postgres"
   
   # PostgreSQL specific (for init)
-  POSTGRES_DB: financesync_db
-  POSTGRES_USER: postgres
+  POSTGRES_DB: "financesync_db"
+  POSTGRES_USER: "postgres"
 
   # ===== SERVER =====
-  SERVER_PORT: 8080
-  SERVER_SERVLET_CONTEXT_PATH: /api
+  SERVER_PORT: "8080"
+  SERVER_SERVLET_CONTEXT_PATH: "/api"
 
   # ===== JPA/HIBERNATE =====
-  SPRING_JPA_HIBERNATE_DDL_AUTO: update
-  SPRING_JPA_SHOW_SQL: true
-  SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
-  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "true"
+  SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.PostgreSQLDialect"
