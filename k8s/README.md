@@ -1,172 +1,183 @@
- # Kubernetes Manifests - FinanceSync
+# Manifestos Kubernetes - FinanceSync
 
- ## File Structure
+## Estrutura de Arquivos
 
- ```
- k8s/
- ├── namespace.yaml                 # Logical isolation
- ├── configmap.yaml                 # Non-sensitive variables
- ├── secret.yaml                    # Sensitive data (passwords, tokens)
- ├── postgres-deployment.yaml       # PostgreSQL Deployment
- ├── postgres-service.yaml          # PostgreSQL Service
- ├── app-deployment.yaml            # Spring Boot Deployment (3 replicas)
- ├── app-service.yaml               # LoadBalancer Service
- ├── kustomization.yaml             # Resource management
- └── README.md                       # Documentation
- ```
+```
+k8s/
+├── namespace.yaml                 # Isolamento lógico
+├── configmap.yaml                 # Variáveis não-sensíveis
+├── secret.yaml                    # Dados sensíveis (senhas, tokens) - NÃO versionado (veja .gitignore)
+├── postgres-deployment.yaml       # Deployment do PostgreSQL
+├── postgres-service.yaml          # Serviço do PostgreSQL
+├── app-deployment.yaml            # Deployment do Spring Boot (3 réplicas)
+├── app-service.yaml               # Serviço LoadBalancer
+├── kustomization.yaml             # Gerenciamento de recursos
+├── secret.yaml.example            # Modelo para secret.yaml (versionado)
+└── README.md                       # Documentação
+```
 
- ## Kubernetes Components
+## Componentes Kubernetes
 
- ### Namespace
- - Logical isolation within cluster
- - Name: `financesync`
- - All resources are isolated
+### Namespace
+- Isolamento lógico dentro do cluster
+- Nome: `financesync`
+- Todos os recursos estão isolados
 
- ### ConfigMap
- - Non-sensitive environment variables
- - Examples: ports, hosts, database names
- - Mutable without redeployment
+### ConfigMap
+- Variáveis de ambiente não-sensíveis
+- Exemplos: portas, hosts, nomes de banco de dados
+- **Todos os valores estão entre aspas** conforme exigido pelo Kubernetes (ex: `"5432"`, `"true"`)
+- Mutável sem necessidade de redeploy
 
- ### Secret
- - Sensitive data (passwords, JWT tokens)
- - Encrypted at rest in production
- - Not versioned in production (see Secret Management below)
+### Secret
+- Dados sensíveis (senhas, tokens JWT)
+- Criptografados em repouso em produção
+- **Não versionado**: `k8s/secret.yaml` está listado em `.gitignore` e **nunca deve ser commitado**
+- Use `k8s/secret.yaml.example` como modelo para desenvolvimento local
+- Arquivos de backup (`*.bak`, `*.bak2`, `*.test`) também são ignorados para evitar exposição acidental
 
- ### PostgreSQL Deployment
- - 1 replica (stateful)
- - Image: `postgres:16-alpine`
- - Volume: emptyDir (temporary - use PersistentVolume in production)
- - Health checks: liveness + readiness
+### Deployment do PostgreSQL
+- 1 réplica (stateful)
+- Imagem: `postgres:16-alpine`
+- Volume: emptyDir (temporário - use PersistentVolume em produção)
+- Verificações de saúde: liveness + readiness
 
- ### PostgreSQL Service
- - Type: ClusterIP (internal only)
- - Name: `postgres` (resolvable within cluster)
- - Port: 5432
+### Serviço do PostgreSQL
+- Tipo: ClusterIP (interno apenas)
+- Nome: `postgres` (resolúvel dentro do cluster)
+- Porta: 5432
 
- ### Spring Boot Deployment
- - 3 replicas (high availability)
- - Image: `financesync:latest`
- - Rolling updates (zero downtime)
- - Health checks: liveness + readiness
- - Resource limits: 256Mi RAM, 250m CPU (request), 512Mi RAM, 500m CPU (limit)
+### Deployment do Spring Boot
+- 3 réplicas (alta disponibilidade)
+- Imagem: `financesync:latest`
+- Atualizaçõesrolling (zero downtime)
+- Verificações de saúde: liveness + readiness
+- Limites de recursos: 256Mi RAM, 250m CPU (request), 512Mi RAM, 500m CPU (limit)
 
- ### Spring Boot Service
- - Type: LoadBalancer (external)
- - Port 80 (external) → 8080 (container)
- - NodePort: 30000 (Docker Desktop K8s)
+### Serviço do Spring Boot
+- Tipo: LoadBalancer (externo)
+- Porta 80 (externo) → 8080 (container)
+- NodePort: 30000 (Docker Desktop K8s)
 
- ### Kustomization
- - Manages all YAML files
- - Deploy with: `kubectl apply -k k8s/`
+### Kustomization
+- Gerencia todos os arquivos YAML
+- Deploy com: `kubectl apply -k k8s/`
 
- ## Secret Management
+## Gerenciamento de Secrets
 
- **⚠️ IMPORTANT: `k8s/secret.yaml` is NOT versioned in Git (it's in `.gitignore`)**
+**⚠️ IMPORTANTE: `k8s/secret.yaml` NÃO é versionado no Git (está no `.gitignore`)**
+Arquivos de backup (`*.bak`, `*.bak2`, `*.test`) também são ignorados.
 
- ### Setup Local Secret (Development):
+### Configuração Local do Secret (Desenvolvimento):
 
- 1. Copy the template:
- ```bash
- cp k8s/secret.yaml.example k8s/secret.yaml
- ```
+1. Copie o modelo:
+```bash
+cp k8s/secret.yaml.example k8s/secret.yaml
+```
 
- 2. Edit with your values:
- ```bash
- # Edit the file:
- vim k8s/secret.yaml
- # or
- code k8s/secret.yaml
- ```
+2. Edite com seus valores:
+```bash
+# Edite o arquivo:
+vim k8s/secret.yaml
+# ou
+code k8s/secret.yaml
+```
 
- 3. Set strong passwords:
- ```yaml
- DB_PASSWORD: "your_strong_db_password"        # Change this!
- POSTGRES_PASSWORD: "your_strong_postgres_pw"  # Change this!
- JWT_SECRET: "your_strong_jwt_secret_key_64_chars_minimum"  # Change this!
- ```
+3. Defina senhas fortes:
+```yaml
+DB_PASSWORD: "sua_senha_banco_forte"        # Altere isto!
+POSTGRES_PASSWORD: "sua_senha_postgres_forte"  # Aloste isto!
+JWT_SECRET: "sua_chave_jwt_forte_de_64_caracteres_minimo"  # Altere isto!
+```
 
- ### Generate Secure JWT Secret:
+### Como gerar um JWT Secret seguro:
 
- **Linux/macOS:**
- ```bash
- openssl rand -base64 64 | tr -d '\n'
- ```
+**Linux/macOS:**
+```bash
+openssl rand -base64 64 | tr -d '\n'
+```
 
- **PowerShell (Windows):**
- ```powershell
- -join ((0..63) | ForEach-Object { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[(Get-Random -Maximum 62)] })
- ```
+**PowerShell (Windows):**
+```powershell
+-join ((0..63) | ForEach-Object { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012341]]))
+```
 
- ### Production Secret Management:
+> **Observação**: Para este repositório, senhas fortes e um JWT secret já foram definidos localmente (eles **não** são commitados). Substitua-os pelos seus próprios valores se desejar rodar as credenciais.
 
- - **AWS**: Use AWS Secrets Manager
- - **Azure**: Use Azure Key Vault
- - **GCP**: Use Secret Manager
- - **On-Premises**: Use HashiCorp Vault or similar
+### Gerenciamento de Secrets em Produção:
+- **AWS**: AWS Secrets Manager
+- **Azure**: Azure Key Vault
+- **GCP**: Secret Manager
+- **On-Premises**: HashiCorp Vault ou similar
 
- Reference in Kubernetes:
- ```yaml
- secretRef:
-   name: financesync-secret  # External secret synced by controller
- ```
+Referência no Kubernetes (exemplo com operador de secrets externos):
+```yaml
+secretRef:
+  name: financesync-secret  # Secret externo sincronizado por controller
+```
 
- ## Usage
+## Uso
 
- ### Deploy on Kubernetes:
+### Deploy no Kubernetes:
 
- ```bash
- # 1. Enable K8s on Docker Desktop (Settings → Kubernetes → Enable)
+```bash
+# 1. Ative o Kubernetes no Docker Desktop (Settings → Kubernetes → Enable)
 
- # 2. Apply manifests
- kubectl apply -k k8s/
+# 2. Aplique os manifests
+kubectl apply -k k8s/
 
- # 3. Check status
- kubectl get pods -n financesync
- kubectl get svc -n financesync
+# 3. Verifique o status
+kubectl get pods -n financesync
+kubectl get svc -n financesync
 
- # 4. View logs
- kubectl logs -n financesync -l app=financesync-app
+# 4. Visualize logs
+kubectl logs -n financesync -l app=financesync-app
 
- # 5. Access application
- # URL: http://localhost:30000/api/swagger-ui.html
- ```
+# 5. Acesse a aplicação
+# URL: http://localhost:30000/api/swagger-ui.html
+```
 
- ## Comparison: docker-compose vs Kubernetes
+## Comparação: docker-compose vs Kubernetes
 
- | Feature | docker-compose | Kubernetes |
- |---------|---------|-----------|
- | Scale | Single machine | Multiple nodes |
- | Replicas | Manual | Automatic |
- | Health checks | Basic | Advanced |
- | Rolling updates | No | Yes |
- | Load balancing | Basic | Native |
- | Storage | Volumes | PersistentVolumes |
- | Secrets | .env file | K8s Secrets (encrypted) |
- | Monitoring | No | Native metrics |
+| Feature | docker-compose | Kubernetes |
+|---------|---------|-----------|
+| Escala | Máquina única | Múltiplos nós |
+| Réplicas | Manual | Automática |
+| Verificações de saúde | Básicas | Avançadas |
+| Atualizações rolling | Não | Sim |
+| Balanceamento de carga | Básico | Nativo |
+| Armazenamento | Volumes | PersistentVolumes |
+| Secrets | Arquivo .env | Secrets do Kubernetes (criptografados) |
+| Monitoramento | Nenhum | Métricas nativas |
 
- ## Development vs Production
+## Desenvolvimento vs Produção
 
- ### Development:
- - Secrets stored in YAML (visible)
- - Storage: emptyDir (data lost on restart)
- - 3 app replicas
+### Desenvolvimento:
+- Secrets armazenados em YAML (visíveis apenas localmente, nunca commitados)
+- Armazenamento: emptyDir (dados perdidos ao reiniciar)
+- 3 réplicas da aplicação
 
- ### Production:
- - Secrets in AWS Secrets Manager / Azure Key Vault / HashiCorp Vault
- - Storage: PersistentVolume (NFS/EBS/Azure Disk)
- - Higher resource limits
- - Network policies
- - RBAC (Role-Based Access Control)
+### Produção:
+- Secrets no AWS Secrets Manager / Azure Key Vault / HashiCorp Vault
+- Armazenamento: PersistentVolume (NFS/EBS/Azure Disk)
+- Limites de recursos maiores
+- Políticas de rede
+- RBAC (Controle de Acesso baseado em Funções)
 
- ## Deployment Lifecycle
+## Ciclo de Deploy
 
- ```
- 1. kubectl apply -k k8s/
- 2. Namespace created
- 3. ConfigMap and Secret created
- 4. PostgreSQL Deployment starts (1 Pod)
- 5. PostgreSQL Service created
- 6. Spring Boot Deployment starts (3 Pods, rolling)
- 7. Spring Boot Service LoadBalancer created
- 8. Application ready at LoadBalancer endpoint
- ```
+```
+1. kubectl apply -k k8s/
+2. Namespace criado
+3. ConfigMap e Secret criados
+4. Deployment do PostgreSQL inicia (1 Pod)
+5. Serviço do PostgreSQL criado
+6. Deployment do Spring Boot inicia (3 Pods, rolling)
+7. Serviço LoadBalancer do Spring Boot criado
+8. Aplicação pronta no endpoint do LoadBalancer
+```
+
+## Notas de Segurança
+- Todos os arquivos de backup/teste (`*.bak`, `*.bak2`, `*.test`) são ignorados por `.gitignore` para evitar o commit acidental de dados sensíveis.
+- Os valores do `configmap.yaml` estão devidamente entre aspas (ex: `"5432"`, `"true"`) para satisfazer o requisito do Kubernetes de `map[string]string`.
+- Caso precise rotacionar os secrets localmente, atualize `k8s/secret.yaml` e reaplique: `kubectl apply -k k8s/`.
