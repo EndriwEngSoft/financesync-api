@@ -86,7 +86,7 @@ code k8s/secret.yaml
 3. Defina senhas fortes:
 ```yaml
 DB_PASSWORD: "sua_senha_banco_forte"        # Altere isto!
-POSTGRES_PASSWORD: "sua_senha_postgres_forte"  # Aloste isto!
+POSTGRES_PASSWORD: "sua_senha_postgres_forte"  # Altere isto!
 JWT_SECRET: "sua_chave_jwt_forte_de_64_caracteres_minimo"  # Altere isto!
 ```
 
