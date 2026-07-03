@@ -227,5 +227,3 @@ Após inicializar a aplicação com sucesso através de qualquer um dos métodos
 ## 👨‍💻 Autor
 
 **Endriw Colvara Bento**
-
-```
