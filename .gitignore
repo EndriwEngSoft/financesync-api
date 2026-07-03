@@ -35,3 +35,6 @@ build/
 application.properties
 .env
 k8s/secret.yaml
+k8s/*.bak
+k8s/*.bak2
+k8s/*.test
