@@ -36,8 +36,11 @@ spec:
     spec:
       containers:
       - name: app
-        # Sua imagem Docker que você fez com: docker build -t financesync:latest .
-        image: financesync:latest
+        # Tag versionada: sem isso, o RollingUpdate abaixo não tem garantia
+        # de puxar a imagem nova, porque a spec do Deployment não muda
+        # quando o conteúdo por trás de "latest" muda.
+        # No CI, gerar essa tag a partir do commit SHA ou de semver.
+        image: financesync:1.0.0
         imagePullPolicy: IfNotPresent
         
         # Porta do container (interna)
