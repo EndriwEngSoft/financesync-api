@@ -14,10 +14,8 @@ metadata:
   labels:
     app: postgres
 spec:
-  # Apenas 1 instância do banco (não é escalável)
   replicas: 1
-  
-  # Selector conecta Deployment com Pods
+
   selector:
     matchLabels:
       app: postgres
@@ -27,71 +25,66 @@ spec:
       labels:
         app: postgres
     spec:
-      containers:
-      - name: postgres
-        image: postgres:16-alpine
-        
-        # Porta do container (interna)
-        ports:
-        - containerPort: 5432
-          name: db
-        
-        # Variáveis de ambiente explícitas
-        env:
-        - name: POSTGRES_INITDB_ARGS
-          value: "-c max_connections=200"
-        
-        # Injeta variáveis de ambiente do ConfigMap e Secret
-        envFrom:
-        - configMapRef:
-            name: financesync-config
-        - secretRef:
-            name: financesync-secret
-        
-        # Storage: onde dados do banco são guardados
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-          subPath: postgres
-        
-        # Limita recursos CPU/Memory
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        
-        # Health check: verifica se banco está saudável
-        # Se falhar 3 vezes, reinicia o container
-        livenessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - pg_isready -U postgres
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        
-        # Readiness check: verifica se banco está pronto
-        # Se falhar, remove do serviço até ficar pronto
-        readinessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - pg_isready -U postgres
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
+      # Nem o Postgres nem a app falam com a API do Kubernetes,
+      # então não precisam do token de ServiceAccount montado no Pod.
+      # Reduz superfície de ataque caso o container seja comprometido.
+      automountServiceAccountToken: false
 
-      # Volume: armazenamento persistente
-      # Usa PersistentVolumeClaim para manter dados mesmo com Pod reiniciando
-      # Configurado em postgres-pvc.yaml
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+
+          ports:
+            - containerPort: 5432
+              name: db
+
+          env:
+            - name: POSTGRES_INITDB_ARGS
+              value: "-c max_connections=200"
+
+          envFrom:
+            - configMapRef:
+                name: financesync-config
+            - secretRef:
+                name: financesync-secret
+
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+              ephemeral-storage: "500Mi"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+              ephemeral-storage: "1Gi"
+
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+
       volumes:
-      - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: postgres-pvc
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
