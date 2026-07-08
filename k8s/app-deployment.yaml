@@ -34,6 +34,11 @@ spec:
       labels:
         app: financesync-app
     spec:
+      # Nem o Postgres nem a app falam com a API do Kubernetes,
+      # então não precisam do token de ServiceAccount montado no Pod.
+      # Reduz superfície de ataque caso o container seja comprometido.
+      automountServiceAccountToken: false
+
       containers:
       - name: app
         # Tag versionada: sem isso, o RollingUpdate abaixo não tem garantia
