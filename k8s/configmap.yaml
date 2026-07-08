@@ -18,12 +18,19 @@ metadata:
     app: financesync
 data:
   # ===== DATABASE =====
+  # DB_* é o padrão que a aplicação Spring Boot consome
+  # (definido em application.properties via ${DB_HOST}, ${DB_USER}, etc.)
   DB_HOST: "postgres"
   DB_PORT: "5432"
   DB_NAME: "financesync_db"
   DB_USER: "postgres"
-  
-  # PostgreSQL specific (for init)
+
+  # POSTGRES_* é exigido pela IMAGEM OFICIAL do postgres (não é escolha
+  # nossa — é o nome fixo que o entrypoint da imagem espera pra
+  # inicializar o banco). Duplicação intencional: dois consumidores
+  # diferentes (imagem postgres vs. Spring Boot) leem o mesmo valor
+  # sob nomes diferentes. Se DB_NAME ou DB_USER mudar, atualize
+  # POSTGRES_DB / POSTGRES_USER junto.
   POSTGRES_DB: "financesync_db"
   POSTGRES_USER: "postgres"
 
