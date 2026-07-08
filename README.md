@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21">
   <img src="https://img.shields.io/badge/Spring_Boot-4.0.3-brightgreen?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Boot 4.0.3">
-  <img src="https://img.shields.io/badge/PostgreSQL-18-blue?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 18">
+  <img src="https://img.shields.io/badge/PostgreSQL-16-blue?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16">
   <img src="https://img.shields.io/badge/Docker-Multi--Stage-blue?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/Kubernetes-K8s-blue?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes">
 </p>
@@ -45,7 +45,7 @@ O **FinanceSync API** é o motor backend de um ecossistema de finanças pessoais
 * **Framework Principal:** Spring Boot 4.0.3
 * **Persistência de Dados:** Spring Data JPA / Hibernate
 * **Segurança:** Spring Security 7.x + JWT (JJWT 0.12.6)
-* **Banco de Dados Relacional:** PostgreSQL 18
+* **Banco de Dados Relacional:** PostgreSQL 16 (Alpine)
 * **Documentação:** SpringDoc OpenAPI 3.0.2 / Swagger UI
 * **Produtividade:** Lombok (Opcional, redução de boilerplate)
 * **Automação & Build:** Maven Wrapper (`./mvnw`)
@@ -210,7 +210,7 @@ O projeto utiliza pirâmide de testes focada em qualidade de entrega contínua. 
 O arquivo `Dockerfile` do projeto foi arquitetado em duas fases distintas (*Multi-Stage Build*):
 
 1. **Fase Builder (Compilação):** Utiliza uma imagem completa do Maven para compilar as classes, rodar validações e empacotar o executável `.jar`.
-2. **Fase Runtime (Execução):** Descarta o peso do Maven e do código fonte, extraindo apenas o artefato gerado para uma imagem enxuta contendo apenas o JRE do OpenJDK. O resultado é uma imagem de produção de alta performance com tamanho reduzido para cerca de **~70MB**.
+2. **Fase Runtime (Execução):** Descarta o peso do Maven e do código fonte, extraindo apenas o artefato gerado para uma imagem enxuta contendo apenas o JRE do OpenJDK. O resultado é uma imagem de produção de alta performance com tamanho reduzido para cerca de **~135MB** (medido via `docker images` sobre `eclipse-temurin:21-jre-alpine`).
 
 ---
 
@@ -218,9 +218,11 @@ O arquivo `Dockerfile` do projeto foi arquitetado em duas fases distintas (*Mult
 
 Após inicializar a aplicação com sucesso através de qualquer um dos métodos descritos acima, você pode explorar e realizar requisições de testes diretamente nos contratos expostos nos seguintes endereços:
 
-* **Interface Interativa (Swagger UI):** `http://localhost:8080/swagger-ui/index.html`
-* **OpenAPI Definições JSON:** `http://localhost:8080/v3/api-docs`
-* **OpenAPI Definições YAML:** `http://localhost:8080/v3/api-docs.yaml`
+* **Interface Interativa (Swagger UI):** `http://localhost:8080/api/swagger-ui/index.html`
+* **OpenAPI Definições JSON:** `http://localhost:8080/api/v3/api-docs`
+* **OpenAPI Definições YAML:** `http://localhost:8080/api/v3/api-docs.yaml`
+
+> O prefixo `/api` vem de `server.servlet.context-path`, que é `/api` por padrão (veja `application.properties.example`) em qualquer um dos 3 modos de execução acima.
 
 ---
 
