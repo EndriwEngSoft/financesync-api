@@ -39,7 +39,7 @@ k8s/
 ### Deployment do PostgreSQL
 - 1 réplica (stateful)
 - Imagem: `postgres:16-alpine`
-- Volume: emptyDir (temporário - use PersistentVolume em produção)
+- Volume: PersistentVolumeClaim de 10Gi, ReadWriteOnce (`postgres-pvc.yaml`) - dados sobrevivem a reinícios do Pod
 - Verificações de saúde: liveness + readiness
 
 ### Serviço do PostgreSQL
@@ -49,8 +49,9 @@ k8s/
 
 ### Deployment do Spring Boot
 - 3 réplicas (alta disponibilidade)
-- Imagem: `financesync:latest`
-- Atualizaçõesrolling (zero downtime)
+- Imagem: `financesync:1.0.0` (versionada - evita o problema de rollout com `latest`)
+- Atualizações rolling (zero downtime)
+- ServiceAccount token automount desabilitado (menor superfície de ataque)
 - Verificações de saúde: liveness + readiness
 - Limites de recursos: 256Mi RAM, 250m CPU (request), 512Mi RAM, 500m CPU (limit)
 
@@ -99,7 +100,7 @@ openssl rand -base64 64 | tr -d '\n'
 
 **PowerShell (Windows):**
 ```powershell
--join ((0..63) | ForEach-Object { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012341]]))
+-join ((1..64) | ForEach-Object { (65..90 + 97..122 + 48..57) | Get-Random | ForEach-Object { [char]$_ } })
 ```
 
 > **Observação**: Para este repositório, senhas fortes e um JWT secret já foram definidos localmente (eles **não** são commitados). Substitua-os pelos seus próprios valores se desejar rodar as credenciais.
@@ -134,7 +135,7 @@ kubectl get svc -n financesync
 kubectl logs -n financesync -l app=financesync-app
 
 # 5. Acesse a aplicação
-# URL: http://localhost:30000/api/swagger-ui.html
+# URL: http://localhost:30000/api/swagger-ui/index.html
 ```
 
 ## Comparação: docker-compose vs Kubernetes
@@ -154,12 +155,12 @@ kubectl logs -n financesync -l app=financesync-app
 
 ### Desenvolvimento:
 - Secrets armazenados em YAML (visíveis apenas localmente, nunca commitados)
-- Armazenamento: emptyDir (dados perdidos ao reiniciar)
+- Armazenamento: PersistentVolumeClaim de 10Gi (StorageClass padrão do cluster, ex: `hostpath` no Docker Desktop K8s)
 - 3 réplicas da aplicação
 
 ### Produção:
 - Secrets no AWS Secrets Manager / Azure Key Vault / HashiCorp Vault
-- Armazenamento: PersistentVolume (NFS/EBS/Azure Disk)
+- Armazenamento: PersistentVolume gerenciado (NFS/EBS/Azure Disk), StorageClass nomeada
 - Limites de recursos maiores
 - Políticas de rede
 - RBAC (Controle de Acesso baseado em Funções)
