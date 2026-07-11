@@ -84,6 +84,7 @@ class TransactionControllerTest {
         request.setDescription(TRANSACTION_DESCRIPTION);
         request.setAccountId(account.getId());
         request.setCategoryId(category.getId());
+        request.setCurrency("BRL");
 
         return request;
     }

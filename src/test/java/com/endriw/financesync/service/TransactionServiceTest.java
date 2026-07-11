@@ -1,6 +1,8 @@
 package com.endriw.financesync.service;
 
+import com.endriw.financesync.client.FrankfurterClient;
 import com.endriw.financesync.dto.TransactionRequest;
+import com.endriw.financesync.dto.integration.CurrencyConversionResponse;
 import com.endriw.financesync.model.Account;
 import com.endriw.financesync.model.Category;
 import com.endriw.financesync.model.Transaction;
@@ -19,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +52,9 @@ public class TransactionServiceTest {
     @Mock
     UserRepository userRepository;
 
+    @Mock
+    FrankfurterClient frankfurterClient;
+
     @InjectMocks
     TransactionService transactionService;
 
@@ -61,9 +67,20 @@ public class TransactionServiceTest {
         category.setUser(user);
 
         Account account = new Account();
+
         account.setUser(user);
+        account.setCurrency("BRL");
 
         TransactionRequest request = new TransactionRequest();
+
+        request.setAmount(AMOUNT);
+        request.setCurrency("BRL");
+        request.setType(TYPE);
+        request.setPaymentMethod(PAYMENT_METHOD);
+        request.setFee(FEE);
+        request.setDescription(DESCRIPTION);
+        request.setAccountId(1L);
+        request.setCategoryId(1L);
 
         Transaction transaction = new Transaction();
 
@@ -78,7 +95,7 @@ public class TransactionServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(categoryRepository.findById(any())).thenReturn(Optional.of(category));
         when(accountRepository.findById(any())).thenReturn(Optional.of(account));
-        when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Transaction response = transactionService.create(request, EMAIL);
 
@@ -92,6 +109,7 @@ public class TransactionServiceTest {
         assertEquals(FEE, response.getFee());
         assertEquals(DESCRIPTION, response.getDescription());
         assertEquals(LocalDateTime.now().getDayOfYear(), response.getTransactionDate().getDayOfYear());
+        assertEquals(AMOUNT, response.getAmountConverted());
     }
 
     @Test
@@ -178,6 +196,55 @@ public class TransactionServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> transactionService.create(request, EMAIL));
         assertEquals("Category does not belong to this user", ex.getMessage());
+    }
+
+    @Test
+    void create_whenCurrenciesAreDifferent_shouldCallClientAndConvertAmount() {
+        User user = new User();
+        user.setId(1L);
+
+        Category category = new Category();
+        category.setUser(user);
+
+        Account account = new Account();
+        account.setUser(user);
+        account.setCurrency("BRL");
+
+        TransactionRequest request = new TransactionRequest();
+        request.setAmount(new BigDecimal("50.00"));
+        request.setCurrency("USD");
+        request.setType(TYPE);
+        request.setAccountId(1L);
+        request.setCategoryId(1L);
+
+        Transaction transaction = new Transaction();
+        transaction.setAmount(request.getAmount());
+
+        CurrencyConversionResponse mockResponse = new CurrencyConversionResponse(
+                LocalDate.now(),
+                "BRL",
+                "USD",
+                new BigDecimal("5.0000")
+        );
+
+
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(any())).thenReturn(Optional.of(category));
+        when(accountRepository.findById(any())).thenReturn(Optional.of(account));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(frankfurterClient.getCurrencyConversion("BRL", "USD")).thenReturn(mockResponse);
+
+        Transaction response = transactionService.create(request, EMAIL);
+
+        assertNotNull(response);
+        assertEquals(new BigDecimal("50.00"), response.getAmount(), "O valor original deve ser mantido");
+        assertEquals(new BigDecimal("250.0000"), response.getAmountConverted(), "O valor convertido deve estar " +
+                "correto");
+        assertNotNull(response.getCurrencyConversion(), "A entidade de conversão deve ter sido criada");
+        assertEquals(new BigDecimal("5.0000"), response.getCurrencyConversion().getRate());
+        verify(frankfurterClient, times(1)).getCurrencyConversion("BRL", "USD");
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
     }
 
     @Test
