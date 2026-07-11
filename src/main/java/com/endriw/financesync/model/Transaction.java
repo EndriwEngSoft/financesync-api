@@ -27,6 +27,9 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(precision = 19, scale = 4)
+    private BigDecimal amountConverted;
+
     @Enumerated(EnumType.STRING)
     private TransactionType type;
     @Enumerated(EnumType.STRING)
@@ -48,5 +51,8 @@ public class Transaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "transaction", cascade = CascadeType.ALL)
+    private CurrencyConversion  currencyConversion;
 
 }
