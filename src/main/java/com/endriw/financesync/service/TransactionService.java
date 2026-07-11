@@ -1,10 +1,9 @@
 package com.endriw.financesync.service;
 
+import com.endriw.financesync.client.FrankfurterClient;
 import com.endriw.financesync.dto.TransactionRequest;
-import com.endriw.financesync.model.Account;
-import com.endriw.financesync.model.Category;
-import com.endriw.financesync.model.Transaction;
-import com.endriw.financesync.model.User;
+import com.endriw.financesync.dto.integration.CurrencyConversionResponse;
+import com.endriw.financesync.model.*;
 import com.endriw.financesync.model.enums.TransactionStatus;
 import com.endriw.financesync.repository.AccountRepository;
 import com.endriw.financesync.repository.CategoryRepository;
@@ -12,6 +11,8 @@ import com.endriw.financesync.repository.TransactionRepository;
 import com.endriw.financesync.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,14 +24,18 @@ public class TransactionService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
+    private final FrankfurterClient frankfurterClient;
+
     public TransactionService(TransactionRepository transactionRepository,
                               AccountRepository accountRepository,
                               CategoryRepository categoryRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              FrankfurterClient frankfurterClient) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
+        this.frankfurterClient = frankfurterClient;
     }
 
     public Transaction create(TransactionRequest request, String email) {
@@ -60,6 +65,32 @@ public class TransactionService {
 
         transaction.setAccount(account);
         transaction.setCategory(category);
+
+        String accountCurrency = account.getCurrency();
+        String transactionCurrency = request.getCurrency();
+
+        if (!accountCurrency.equalsIgnoreCase(transactionCurrency)) {
+
+            CurrencyConversionResponse quote = frankfurterClient.getCurrencyConversion(accountCurrency, transactionCurrency);
+
+            CurrencyConversion currencyConversion = new CurrencyConversion();
+            currencyConversion.setBase(accountCurrency);
+            currencyConversion.setQuote(transactionCurrency);
+
+            currencyConversion.setRate(quote.rate());
+            currencyConversion.setDate(quote.date());
+
+            currencyConversion.setTransaction(transaction);
+            transaction.setCurrencyConversion(currencyConversion);
+
+            BigDecimal convertedAmount = request.getAmount()
+                    .multiply(quote.rate())
+                    .setScale(4, RoundingMode.HALF_UP);
+            transaction.setAmountConverted(convertedAmount);
+
+        } else {
+            transaction.setAmountConverted(request.getAmount());
+        }
 
         return transactionRepository.save(transaction);
     }
