@@ -1,6 +1,9 @@
 # 💰 FinanceSync API
 
 <p align="center">
+  <a href="https://github.com/EndriwEngSoft/financesync-api/actions/workflows/ci.yml">
+    <img src="https://github.com/EndriwEngSoft/financesync-api/actions/workflows/ci.yml/badge.svg" alt="CI">
+  </a>
   <img src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21">
   <img src="https://img.shields.io/badge/Spring_Boot-4.0.3-brightgreen?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Boot 4.0.3">
   <img src="https://img.shields.io/badge/PostgreSQL-16-blue?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16">
@@ -228,4 +231,6 @@ Após inicializar a aplicação com sucesso através de qualquer um dos métodos
 
 ## 👨‍💻 Autor
 
-**Endriw Colvara Bento**
+**Endriw Colvara Bento**  
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://linkedin.com/in/endriw-bento)
+[![Portfólio](https://img.shields.io/badge/Portf%C3%B3lio-000?style=flat&logo=vercel&logoColor=white)](https://endriwdev.vercel.app/)
