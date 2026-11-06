@@ -71,11 +71,16 @@ public class TransactionService {
 
         if (!accountCurrency.equalsIgnoreCase(transactionCurrency)) {
 
-            CurrencyConversionResponse quote = frankfurterClient.getCurrencyConversion(accountCurrency, transactionCurrency);
+            // base = moeda que o usuário informou na transação, quote = moeda da conta.
+            // A Frankfurter retorna quantas unidades de "quote" valem 1 unidade de
+            // "base", então multiplicar o valor da transação (em transactionCurrency)
+            // por essa taxa dá o valor na moeda da conta - é isso que amountConverted
+            // precisa representar.
+            CurrencyConversionResponse quote = frankfurterClient.getCurrencyConversion(transactionCurrency, accountCurrency);
 
             CurrencyConversion currencyConversion = new CurrencyConversion();
-            currencyConversion.setBase(accountCurrency);
-            currencyConversion.setQuote(transactionCurrency);
+            currencyConversion.setBase(transactionCurrency);
+            currencyConversion.setQuote(accountCurrency);
 
             currencyConversion.setRate(quote.rate());
             currencyConversion.setDate(quote.date());

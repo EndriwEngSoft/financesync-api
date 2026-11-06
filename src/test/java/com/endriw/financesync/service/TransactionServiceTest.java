@@ -220,11 +220,15 @@ public class TransactionServiceTest {
         Transaction transaction = new Transaction();
         transaction.setAmount(request.getAmount());
 
+        // Taxa realista (ordem de grandeza de USD -> BRL em 2026), e não o
+        // inverso: 1 USD vale mais que 1 BRL, então a taxa tem que ser > 1.
+        // Uma taxa invertida (< 1) mascararia uma troca de base/quote na
+        // chamada ao client, que foi exatamente o bug corrigido aqui.
         CurrencyConversionResponse mockResponse = new CurrencyConversionResponse(
                 LocalDate.now(),
-                "BRL",
                 "USD",
-                new BigDecimal("5.0000")
+                "BRL",
+                new BigDecimal("5.2000")
         );
 
 
@@ -233,17 +237,17 @@ public class TransactionServiceTest {
         when(accountRepository.findById(any())).thenReturn(Optional.of(account));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(frankfurterClient.getCurrencyConversion("BRL", "USD")).thenReturn(mockResponse);
+        when(frankfurterClient.getCurrencyConversion("USD", "BRL")).thenReturn(mockResponse);
 
         Transaction response = transactionService.create(request, EMAIL);
 
         assertNotNull(response);
         assertEquals(new BigDecimal("50.00"), response.getAmount(), "O valor original deve ser mantido");
-        assertEquals(new BigDecimal("250.0000"), response.getAmountConverted(), "O valor convertido deve estar " +
-                "correto");
+        assertEquals(new BigDecimal("260.0000"), response.getAmountConverted(), "50 USD a 5,20 deve dar 260 BRL - " +
+                "o valor convertido precisa estar na moeda da CONTA, não na moeda da transação");
         assertNotNull(response.getCurrencyConversion(), "A entidade de conversão deve ter sido criada");
-        assertEquals(new BigDecimal("5.0000"), response.getCurrencyConversion().getRate());
-        verify(frankfurterClient, times(1)).getCurrencyConversion("BRL", "USD");
+        assertEquals(new BigDecimal("5.2000"), response.getCurrencyConversion().getRate());
+        verify(frankfurterClient, times(1)).getCurrencyConversion("USD", "BRL");
         verify(transactionRepository, times(1)).save(any(Transaction.class));
     }
 
